@@ -5,6 +5,7 @@ import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.media.SoundPool;
 import android.os.Message;
@@ -81,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             window.setFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION,
                     WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
        }
-
+        device = null;
         ScrollView mScrollView = (ScrollView)findViewById(R.id.scrollContent);
         mScrollView.setVerticalScrollBarEnabled(false);
         mScrollView.setHorizontalScrollBarEnabled(false);
@@ -139,7 +140,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         dialog = ProgressDialog.show(MainActivity.this, null, "正在连接中...");
 
-
+        Bluetoothopen();
         BloothInit();
 
         button1.setOnClickListener(new View.OnClickListener() {
@@ -505,7 +506,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
                     mysocket.handle_mes("SETMINTEMP" + tempminc + "*");
                     mysocket.handle_mes("SETMINHUMI" + humiminc + "*");
                     mysocket.handle_mes("SETMINLIGHT" + lightminc + "*");
-                    Toast.makeText(getApplicationContext(), "SETMINTEMP" + tempminc + "*",
+                    Toast.makeText(getApplicationContext(), "SETMINLIGHT" + lightminc + "*",
                             Toast.LENGTH_SHORT).show();
 
                 } catch (IOException e) {
@@ -546,40 +547,43 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
-
-    public void BloothInit()  {
-        BluetoothAdapter mBluetoothAdapter = BluetoothAdapter
-                .getDefaultAdapter();
-        if (mBluetoothAdapter == null) {
-            // 表明此手机不支持蓝牙
+    public void Bluetoothopen()
+    {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter == null) {
             return;
         }
-        if (!mBluetoothAdapter.isEnabled()) { // 蓝牙未开启，则开启蓝牙
-            // Intent enableIntent = new
-            // Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            // startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-            mBluetoothAdapter.enable();
-            Toast.makeText(getApplicationContext(), "蓝牙已开启", Toast.LENGTH_SHORT)
-                    .show();
+        if (!adapter.isEnabled()) {
+            adapter.enable();
+            //Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            //startActivityForResult(intent, 0x1);
+           // dialog = ProgressDialog.show(MainActivity.this, null, "打开蓝牙中...");
         }
-        // ......
-
+    }
+    public void BloothInit()  {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+
         Set<BluetoothDevice> devices = adapter.getBondedDevices();
         Iterator<BluetoothDevice> iterator = devices.iterator();
 
+        //while(!adapter.isEnabled());
+
         while (iterator.hasNext()) {
-            // 有带关键字"6301"的，则取之
+
             BluetoothDevice dev = iterator.next();
+
             if (dev.getName().contains("HC-05")) {
                 device = dev;
-                break;
+               break;
             }
-        }
+       }
 
         if (device == null) {
            device = devices.iterator().next();
         }
+
+        Toast.makeText(getApplicationContext(), device.getName(),
+                Toast.LENGTH_SHORT).show();
 
         mysocket = new BlueToothSocket(device, this.handler);
         Thread t = new Thread(mysocket);

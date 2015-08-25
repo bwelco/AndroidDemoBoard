@@ -26,6 +26,7 @@ public class BlueToothSocket implements Runnable {
     static private BluetoothSocket cwjSocket = null;
     static private BluetoothDevice cwjDevice = null;
     static Queue<String> queue;
+
    // static int queuelength = 0;
     Handler handler;
 
@@ -47,7 +48,7 @@ public class BlueToothSocket implements Runnable {
     }
 
 
-     public static void handle_mes(String mes) throws IOException {
+     public static synchronized void handle_mes(String mes) throws IOException {
        // out.write(mes);
        // out.flush();
         queue.add(mes);
@@ -66,6 +67,7 @@ public class BlueToothSocket implements Runnable {
 
             while (true) {
                 out.write("test*");
+                System.out.println("sadasd");
                 out.flush();
                 Thread.sleep(50);
                 out.write("test*");
