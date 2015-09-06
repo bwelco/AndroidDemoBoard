@@ -22,5 +22,6 @@ public class Finalint {
     public static final int RGB = 16;
     public static final int EXITOK = 17;
     public static final int REFRESH = 18;
+    public static final int OPEN_BLUETOOTH = 19;
 
 }

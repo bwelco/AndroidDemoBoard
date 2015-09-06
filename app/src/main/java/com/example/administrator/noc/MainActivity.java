@@ -68,6 +68,7 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
     public static final String SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB";
     ProgressDialog dialog;
     private static final String[] ledstring={"无色","红色","绿色","蓝色","青色", "黄色", "品红", "白色"};
+    private int REQUEST_ENABLE_BT = 1;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -140,8 +141,10 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
         dialog = ProgressDialog.show(MainActivity.this, null, "正在连接中...");
 
-        Bluetoothopen();
-        BloothInit();
+
+        Thread t = new Thread(new Bluetoothrun());
+        t.start();
+       // BloothInit();
 
         button1.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -547,49 +550,56 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
 
     }
 
-    public void Bluetoothopen()
-    {
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        if (adapter == null) {
-            return;
-        }
-        if (!adapter.isEnabled()) {
-            adapter.enable();
-            //Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            //startActivityForResult(intent, 0x1);
-           // dialog = ProgressDialog.show(MainActivity.this, null, "打开蓝牙中...");
-        }
-    }
-    public void BloothInit()  {
-        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+    public class Bluetoothrun implements Runnable{
 
-        Set<BluetoothDevice> devices = adapter.getBondedDevices();
-        Iterator<BluetoothDevice> iterator = devices.iterator();
-
-        //while(!adapter.isEnabled());
-
-        while (iterator.hasNext()) {
-
-            BluetoothDevice dev = iterator.next();
-
-            if (dev.getName().contains("HC-05")) {
-                device = dev;
-               break;
+        @Override
+        public void run() {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (adapter == null) {
+                return;
             }
-       }
+            if(!adapter.isEnabled()){	//蓝牙未开启，则开启蓝牙
+                adapter.enable();
+            }
 
-        if (device == null) {
-           device = devices.iterator().next();
+            Set<BluetoothDevice> devices = adapter.getBondedDevices();
+            Iterator<BluetoothDevice> iterator = devices.iterator();
+
+            while(!adapter.isEnabled())
+            {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            while (iterator.hasNext()) {
+
+                BluetoothDevice dev = iterator.next();
+
+                if (dev.getName().contains("HC-05")) {
+                    device = dev;
+                    break;
+                }
+            }
+
+            if (device == null) {
+                Message message = new Message();
+                handler.sendMessage(message);
+                message.what = Finalint.OPEN_BLUETOOTH;
+                return;
+            }
+
+            //Toast.makeText(getApplicationContext(), device.getName(),
+            //         Toast.LENGTH_SHORT).show();
+
+            mysocket = new BlueToothSocket(device, MainActivity.this.handler);
+            Thread t = new Thread(mysocket);
+            t.start();
         }
-
-        Toast.makeText(getApplicationContext(), device.getName(),
-                Toast.LENGTH_SHORT).show();
-
-        mysocket = new BlueToothSocket(device, this.handler);
-        Thread t = new Thread(mysocket);
-        t.start();
-
     }
+
 
 
     private android.os.Handler handler = new android.os.Handler() {
@@ -599,21 +609,63 @@ public class MainActivity extends AppCompatActivity implements SwipeRefreshLayou
             super.handleMessage(msg);
             switch (msg.what) {
                 case Finalint.CLIENT_INIT_OK: {
-                    Toast.makeText(getApplicationContext(), "客户端启动成功!",
-                            Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getApplicationContext(), "客户端启动成功!", Toast.LENGTH_SHORT).show();
                     break;
                 }
                 case Finalint.SOCKET_CONNECT_OK: {
-                //    dialog.cancel();
+                    dialog.cancel();
+                    break;
+                }
+                case Finalint.OPEN_BLUETOOTH: {
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setMessage("请连接到\"HC-05\"，pin码为1234");
+                    builder.setTitle("提示");
+                    builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                        //    dialog.dismiss();
+                            // MainActivity.this.finish();
+                            Intent intent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+                            startActivityForResult(intent, 0x1);
+                            finish();
+                            System.exit(0);
+                        }
+                    });
+                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.create().show();
                     break;
                 }
                 case Finalint.CONNECT_FAIL: {
 
-                    Toast.makeText(getApplicationContext(), "连接失败!客户端退出",
-                            Toast.LENGTH_SHORT).show();
-                    dialog.cancel();
-                    finish();
-                    System.exit(0);
+                    AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+                    builder.setMessage("连接失败，确定退出");
+                    builder.setTitle("提示");
+                    builder.setPositiveButton("确认", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            // MainActivity.this.finish();
+                            dialog = ProgressDialog.show(MainActivity.this, null, "程序退出中...");
+                            finish();
+                            System.exit(0);
+
+                        }
+                    });
+                    builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                        }
+                    });
+                    builder.create().show();
+                    //dialog.cancel();
+                    ////finish();
+                    //System.exit(0);
                     break;
 
                 }
