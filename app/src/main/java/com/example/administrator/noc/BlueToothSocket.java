@@ -39,7 +39,7 @@ public class BlueToothSocket implements Runnable {
         BluetoothSocket tmp = null;
         cwjDevice = device;
         this.handler = handler2;
-        UUID uuid = UUID.fromString(MainActivity.SPP_UUID); // 蓝牙普遍支持SPP协议
+        UUID uuid = UUID.fromString(MainActivity.SPP_UUID); // SPP协议
         try {
             tmp = device.createRfcommSocketToServiceRecord(uuid); // 客户端创建
         } catch (IOException e) {
@@ -51,6 +51,7 @@ public class BlueToothSocket implements Runnable {
      public static synchronized void handle_mes(String mes) throws IOException {
        // out.write(mes);
        // out.flush();
+
         queue.add(mes);
        // queuelength++;
        // while()
@@ -67,7 +68,7 @@ public class BlueToothSocket implements Runnable {
 
             while (true) {
                 out.write("test*");
-                System.out.println("sadasd");
+               // System.out.println("sadasd");
                 out.flush();
                 Thread.sleep(50);
                 out.write("test*");
@@ -75,7 +76,7 @@ public class BlueToothSocket implements Runnable {
 
                 readbuff = in.readLine();
                 if (readbuff.startsWith("return")) {
-                    System.out.println(readbuff);
+                  //  System.out.println(readbuff);
                     Message message = new Message();
                     message.what = Finalint.RETURN_OK;
                     handler.sendMessage(message);
@@ -252,7 +253,7 @@ public class BlueToothSocket implements Runnable {
             handler.sendMessage(message);
             message.what = Finalint.SOUND;
         }*/
-        //Thread.sleep(1000);
+        Thread.sleep(10);
     }
 
 }

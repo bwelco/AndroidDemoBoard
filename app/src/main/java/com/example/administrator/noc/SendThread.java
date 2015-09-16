@@ -10,7 +10,7 @@ public class SendThread implements Runnable {
     PrintWriter out;
 
     @Override
-    public void run() {
+    public synchronized void run() {
         while(true) {
             while (BlueToothSocket.queue.size() > 0) {
                 String temp = BlueToothSocket.queue.poll()+"";
